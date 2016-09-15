@@ -154,7 +154,9 @@ public class AccelerometerService extends SensorService implements SensorEventLi
     protected void registerSensors(){
 
         //TODO : (Assignment 0) Register the accelerometer sensor from the sensor manager.
-
+        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        mAccelerometerSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        mSensorManager.registerListener(this,mAccelerometerSensor,SensorManager.SENSOR_DELAY_NORMAL);
         //TODO : (Assignment 1) Register your step detector. Register an OnStepListener to receive step events
     }
 
@@ -164,6 +166,7 @@ public class AccelerometerService extends SensorService implements SensorEventLi
     @Override
     protected void unregisterSensors() {
         //TODO : Unregister your sensors. Make sure mSensorManager is not null before calling its unregisterListener method.
+        mSensorManager.unregisterListener(this,mAccelerometerSensor);
     }
 
     @Override
@@ -210,13 +213,19 @@ public class AccelerometerService extends SensorService implements SensorEventLi
 
     @Override
     public void onSensorChanged(SensorEvent event) {
+//        Log.d(TAG, "X : " + event.values[0] + ", Y : " +
+//                event.values[1] + ", Z : " + event.values[2]);
+
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
 
             // convert the timestamp to milliseconds (note this is not in Unix time)
             long timestamp_in_milliseconds = (long) ((double) event.timestamp / Constants.TIMESTAMPS.NANOSECONDS_PER_MILLISECOND);
 
             //TODO: Send the accelerometer reading to the server
-
+            broadcastAccelerometerReading(timestamp_in_milliseconds,event.values);
+            AccelerometerReading reading  = new AccelerometerReading(mUserID,"Mobile","",timestamp_in_milliseconds,event.values);
+            Log.w("Debug",reading.toString());
+            mClient.sendSensorReading(reading);
             //TODO: broadcast the accelerometer reading to the UI
 
         }else if (event.sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
