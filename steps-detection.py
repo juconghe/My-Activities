@@ -20,12 +20,16 @@ import sys
 import json
 import threading
 import numpy as np
-
+import math
 # TODO: Replace the string with your user ID
 user_id = "e4.e9.a7.6e.0f.37.b9.ff.4a.47"
 
 count = 0
-
+status = "natural"
+dataCounter = 0
+startTime = 0
+startValue = 0
+pendingZeroDataCounter = 0
 '''
     This socket is used to send data back through the data collection server.
     It is used to complete the authentication. It may also be used to send
@@ -53,7 +57,9 @@ def detectSteps(timestamp, filteredValues):
     in the timestamp.
     """
     print(filteredValues)
-    # TODO: Step detection algorithm
+    vectorProdcuts = (filteredValues[0] ** 2)+(filteredValues[1] ** 2) +(filteredValues ** 2)
+    vectorSqrt = math.sqrt(vectorProdcuts)
+    print(vectorSqrt)
     return
 
 
