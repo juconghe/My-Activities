@@ -17,6 +17,8 @@ import java.util.Locale;
 
 import cs.umass.edu.myactivitiestoolkit.R;
 import cs.umass.edu.myactivitiestoolkit.constants.Constants;
+import cs.umass.edu.myactivitiestoolkit.processing.Filter;
+import cs.umass.edu.myactivitiestoolkit.steps.OnStepListener;
 import cs.umass.edu.myactivitiestoolkit.steps.StepDetector;
 import edu.umass.cs.MHLClient.client.MessageReceiver;
 import edu.umass.cs.MHLClient.client.MobileIOClient;
@@ -81,7 +83,7 @@ import edu.umass.cs.MHLClient.sensors.SensorReading;
  * @see SensorEvent
  * @see MobileIOClient
  */
-public class AccelerometerService extends SensorService implements SensorEventListener {
+public class AccelerometerService extends SensorService implements SensorEventListener,OnStepListener {
 
     /** Used during debugging to identify logs by class */
     private static final String TAG = AccelerometerService.class.getName();
@@ -158,6 +160,9 @@ public class AccelerometerService extends SensorService implements SensorEventLi
         mAccelerometerSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mSensorManager.registerListener(this,mAccelerometerSensor,SensorManager.SENSOR_DELAY_NORMAL);
         //TODO : (Assignment 1) Register your step detector. Register an OnStepListener to receive step events
+        mSensorManager.registerListener(mStepDetector,mAccelerometerSensor,SensorManager.SENSOR_DELAY_NORMAL);
+//        mSensorManager.registerListener(this,mStepSensor,SensorManager.SENSOR_DELAY_NORMAL);
+        mStepDetector.registerOnStepListener(this);
     }
 
     /**
@@ -167,6 +172,8 @@ public class AccelerometerService extends SensorService implements SensorEventLi
     protected void unregisterSensors() {
         //TODO : Unregister your sensors. Make sure mSensorManager is not null before calling its unregisterListener method.
         mSensorManager.unregisterListener(this,mAccelerometerSensor);
+        mSensorManager.unregisterListener(mStepDetector,mAccelerometerSensor);
+        mStepDetector.unregisterOnStepListener(this);
     }
 
     @Override
@@ -215,6 +222,8 @@ public class AccelerometerService extends SensorService implements SensorEventLi
     public void onSensorChanged(SensorEvent event) {
 //        Log.d(TAG, "X : " + event.values[0] + ", Y : " +
 //                event.values[1] + ", Z : " + event.values[2]);
+        Filter bufferingFilter = new Filter(3.0);
+        Filter smoothFilter = new Filter(1);
 
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
 
@@ -222,9 +231,11 @@ public class AccelerometerService extends SensorService implements SensorEventLi
             long timestamp_in_milliseconds = (long) ((double) event.timestamp / Constants.TIMESTAMPS.NANOSECONDS_PER_MILLISECOND);
 
             //TODO: Send the accelerometer reading to the server
+            double[] filterValues = bufferingFilter.getFilteredValues(event.values);
+            float[] floatFilterValues = convertToFloatArray(filterValues);
+            float[] finalData = convertToFloatArray(smoothFilter.getFilteredValues(floatFilterValues));
+            AccelerometerReading reading  = new AccelerometerReading(mUserID,"Mobile","",timestamp_in_milliseconds,floatFilterValues);
             broadcastAccelerometerReading(timestamp_in_milliseconds,event.values);
-            AccelerometerReading reading  = new AccelerometerReading(mUserID,"Mobile","",timestamp_in_milliseconds,event.values);
-            Log.w("Debug",reading.toString());
             mClient.sendSensorReading(reading);
             //TODO: broadcast the accelerometer reading to the UI
 
@@ -241,6 +252,14 @@ public class AccelerometerService extends SensorService implements SensorEventLi
         }
     }
 
+    private float[] convertToFloatArray(double[] doubleArray) {
+        float[] floatArray = new float[doubleArray.length];
+        for (int i = 0 ; i < doubleArray.length; i++)
+        {
+            floatArray[i] = (float) doubleArray[i];
+        }
+        return  floatArray;
+    }
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
         Log.i(TAG, "Accuracy changed: " + accuracy);
@@ -300,5 +319,15 @@ public class AccelerometerService extends SensorService implements SensorEventLi
         intent.setAction(Constants.ACTION.BROADCAST_ACCELEROMETER_PEAK);
         LocalBroadcastManager manager = LocalBroadcastManager.getInstance(this);
         manager.sendBroadcast(intent);
+    }
+
+    @Override
+    public void onStepCountUpdated(int stepCount) {
+        broadcastLocalStepCount(stepCount);
+    }
+
+    @Override
+    public void onStepDetected(long timestamp, float[] values) {
+        broadcastStepDetected(timestamp,values);
     }
 }

@@ -6,7 +6,9 @@ import android.hardware.SensorEventListener;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.StringTokenizer;
 
+import cs.umass.edu.myactivitiestoolkit.constants.Constants;
 import cs.umass.edu.myactivitiestoolkit.processing.Filter;
 
 /**
@@ -26,6 +28,15 @@ public class StepDetector implements SensorEventListener {
      * The number of steps taken.
      */
     private int stepCount;
+
+    private final String  NATURAL = "natural";
+    private final String INCREASING = "increasing";
+    private final String DECREASING = "decreasing";
+    private int dataCounter = 0;
+    private int pendingZeroDataCounter = 0;
+    private double startValue;
+    private double startTime;
+    String status = NATURAL;
 
     public StepDetector(){
         mStepListeners = new ArrayList<>();
@@ -66,13 +77,108 @@ public class StepDetector implements SensorEventListener {
      */
     @Override
     public void onSensorChanged(SensorEvent event) {
+        Filter bufferingFilter = new Filter(3.0);
+        Filter smoothFilter = new Filter(1);
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-
+            double doublesFilterValue[] = bufferingFilter.getFilteredValues(event.values);
+            double[] filterValues = smoothFilter.getFilteredValues(convertToFloatArray(doublesFilterValue));
             //TODO: Detect steps! Call onStepDetected(...) when a step is detected.
-
+            double vectorProducts = Math.pow(filterValues[0],2)+Math.pow(filterValues[1],2)+
+                    Math.pow(filterValues[2],1);
+            double vectorSqrt = Math.sqrt(vectorProducts);
+            if(dataCounter == 0) {
+                startValue = vectorSqrt;
+                startTime = (double) event.timestamp;
+            }
+            switch (status) {
+                case NATURAL: {
+                    Log.d("=======>", "I am natural now");
+                    if(dataCounter==5){
+                        double endTime = ((double) event.timestamp);
+                        int slope = slopeTimesTen(startTime,endTime,startValue,vectorSqrt);
+                        if(slope>0){
+                            status = INCREASING;
+                        }else if(slope<0) {
+                            status = DECREASING;
+                        }else {
+                            status = NATURAL;
+                        }
+                        dataCounter = 0;
+                    }else {
+                        dataCounter += 1;
+                    }
+                    break;
+                }
+                case INCREASING: {
+                    Log.d("=======>", "I am increasing now");
+                    if(dataCounter==5){
+                        double endTime = ((double) event.timestamp);
+                        int slope = slopeTimesTen(startTime,endTime,startValue,vectorSqrt);
+                        if(slope>0){
+                            pendingZeroDataCounter = 0;
+                            status = INCREASING;
+                        }else if(slope<0) {
+                            pendingZeroDataCounter = 0;
+                            onStepDetected((long) ((double) event.timestamp / Constants.TIMESTAMPS.NANOSECONDS_PER_MILLISECOND),event.values);
+                            status = DECREASING;
+                        }else {
+                            pendingZeroDataCounter += 1;
+                        }
+                        dataCounter = 0;
+                    }else {
+                        dataCounter += 1;
+                    }
+                    break;
+                }
+                case DECREASING: {
+                    Log.d("=======>", "I am decreasing now");
+                    if(dataCounter==5){
+                        double endTime = ((double) event.timestamp);
+                        int slope = slopeTimesTen(startTime,endTime,startValue,vectorSqrt);
+                        if(slope>0){
+                            pendingZeroDataCounter = 0;
+                            onStepDetected((long) ((double) event.timestamp / Constants.TIMESTAMPS.NANOSECONDS_PER_MILLISECOND),event.values);
+                            status = INCREASING;
+                        }else if(slope<0) {
+                            pendingZeroDataCounter = 0;
+                            status = DECREASING;
+                        }else {
+                            pendingZeroDataCounter += 1;
+                        }
+                        dataCounter = 0;
+                    }else {
+                        dataCounter += 1;
+                    }
+                    break;
+                }
+            }
+                if (pendingZeroDataCounter == 10) {
+                    Log.d("=======>", "Natural pending max reach reset status");
+                    status = NATURAL;
+                    dataCounter = 0;
+                    pendingZeroDataCounter = 0;
+                }
         }
     }
 
+    private int slopeTimesTen(double startTime, double endTime, double sValue, double eValue) {
+//        Log.w("My startValue is", ""+sValue);
+//        Log.w("My endValue is ", ""+eValue);
+//        Log.w("My startTime is", ""+startTime);
+//        Log.w("My endTime is ", ""+endTime);
+        int slope = (int) (((eValue-sValue)/(endTime-startTime))*9.5*Math.pow(10,9));
+        Log.w("My current slope ", ""+slope);
+        return slope;
+    }
+
+    private float[] convertToFloatArray(double[] doubleArray) {
+        float[] floatArray = new float[doubleArray.length];
+        for (int i = 0 ; i < doubleArray.length; i++)
+        {
+            floatArray[i] = (float) doubleArray[i];
+        }
+        return  floatArray;
+    }
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
         // do nothing
