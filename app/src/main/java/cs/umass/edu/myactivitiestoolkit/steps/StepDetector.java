@@ -93,7 +93,7 @@ public class StepDetector implements SensorEventListener {
             switch (status) {
                 case NATURAL: {
                     Log.d("=======>", "I am natural now");
-                    if(dataCounter==5){
+                    if(dataCounter==15){
                         double endTime = ((double) event.timestamp);
                         int slope = slopeTimesTen(startTime,endTime,startValue,vectorSqrt);
                         if(slope>0){
@@ -111,7 +111,7 @@ public class StepDetector implements SensorEventListener {
                 }
                 case INCREASING: {
                     Log.d("=======>", "I am increasing now");
-                    if(dataCounter==5){
+                    if(dataCounter==15){
                         double endTime = ((double) event.timestamp);
                         int slope = slopeTimesTen(startTime,endTime,startValue,vectorSqrt);
                         if(slope>0){
@@ -119,7 +119,7 @@ public class StepDetector implements SensorEventListener {
                             status = INCREASING;
                         }else if(slope<0) {
                             pendingZeroDataCounter = 0;
-                            onStepDetected((long) ((double) event.timestamp / Constants.TIMESTAMPS.NANOSECONDS_PER_MILLISECOND),event.values);
+//                            onStepDetected((long) ((double) event.timestamp / Constants.TIMESTAMPS.NANOSECONDS_PER_MILLISECOND),event.values);
                             status = DECREASING;
                         }else {
                             pendingZeroDataCounter += 1;
@@ -132,7 +132,7 @@ public class StepDetector implements SensorEventListener {
                 }
                 case DECREASING: {
                     Log.d("=======>", "I am decreasing now");
-                    if(dataCounter==5){
+                    if(dataCounter==15){
                         double endTime = ((double) event.timestamp);
                         int slope = slopeTimesTen(startTime,endTime,startValue,vectorSqrt);
                         if(slope>0){
@@ -166,9 +166,9 @@ public class StepDetector implements SensorEventListener {
 //        Log.w("My endValue is ", ""+eValue);
 //        Log.w("My startTime is", ""+startTime);
 //        Log.w("My endTime is ", ""+endTime);
-        int slope = (int) (((eValue-sValue)/(endTime-startTime))*9.5*Math.pow(10,9));
-//        Log.w("My current slope ", ""+slope);
-        return slope;
+        double slope = ((eValue-sValue)/(endTime-startTime))*Math.pow(10,9)*8;
+        Log.w("My current slope ", ""+slope);
+        return (int)slope;
     }
 
     private float[] convertToFloatArray(double[] doubleArray) {

@@ -40,8 +40,8 @@ send_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 send_socket.connect(("none.cs.umass.edu", 9999))
 
 def calculateSlope(sTime,eTime,sValue,eValue):
-    doubleSlope = (eValue - sValue)/(eTime-sTime)*math.pow(10,4)*1.5
-    # print("=============> my slope is{}".format(int(doubleSlope)))
+    doubleSlope = (eValue - sValue)/(eTime-sTime)*math.pow(10,4)*5
+    print("=============> my slope is{}".format((doubleSlope)))
     return int(doubleSlope)
 
 def onStepDetected(timestamp):
@@ -69,7 +69,7 @@ def detectSteps(timestamp, filteredValues):
         startTime = timestamp
 
     if(status=="natural"):
-        print("I am natural")
+        # print("I am natural")
         if(dataCounter == 5):
             slope = calculateSlope(startTime,timestamp,startValue,vectorSqrt)
             dataCounter = 0
@@ -84,7 +84,7 @@ def detectSteps(timestamp, filteredValues):
             dataCounter += 1
 
     if(status=="increasing"):
-        print("I am increasing")
+        # print("I am increasing")
         if(dataCounter == 5):
             slope = calculateSlope(startTime,timestamp,startValue,vectorSqrt)
             dataCounter = 0
@@ -103,7 +103,7 @@ def detectSteps(timestamp, filteredValues):
             dataCounter += 1
 
     if(status=="decreasing"):
-        print("I am decreasing")
+        # print("I am decreasing")
         if(dataCounter == 5):
             slope = calculateSlope(startTime,timestamp,startValue,vectorSqrt)
             dataCounter = 0
