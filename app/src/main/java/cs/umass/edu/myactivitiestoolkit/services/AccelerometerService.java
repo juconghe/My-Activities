@@ -162,10 +162,11 @@ public class AccelerometerService extends SensorService implements SensorEventLi
         //TODO : (Assignment 0) Register the accelerometer sensor from the sensor manager.
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         mAccelerometerSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        mStepSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
         mSensorManager.registerListener(this,mAccelerometerSensor,SensorManager.SENSOR_DELAY_NORMAL);
         //TODO : (Assignment 1) Register your step detector. Register an OnStepListener to receive step events
         mSensorManager.registerListener(mStepDetector,mAccelerometerSensor,SensorManager.SENSOR_DELAY_NORMAL);
-//        mSensorManager.registerListener(this,mStepSensor,SensorManager.SENSOR_DELAY_NORMAL);
+        mSensorManager.registerListener(this,mStepSensor,SensorManager.SENSOR_DELAY_NORMAL);
         mStepDetector.registerOnStepListener(this);
     }
 
@@ -176,6 +177,7 @@ public class AccelerometerService extends SensorService implements SensorEventLi
     protected void unregisterSensors() {
         //TODO : Unregister your sensors. Make sure mSensorManager is not null before calling its unregisterListener method.
         mSensorManager.unregisterListener(this,mAccelerometerSensor);
+        mSensorManager.unregisterListener(this,mStepSensor);
         mSensorManager.unregisterListener(mStepDetector,mAccelerometerSensor);
         mStepDetector.unregisterOnStepListener(this);
     }
@@ -238,7 +240,7 @@ public class AccelerometerService extends SensorService implements SensorEventLi
             double[] filterValues = bufferingFilter.getFilteredValues(event.values);
             float[] floatFilterValues = convertToFloatArray(filterValues);
             float[] finalData = convertToFloatArray(smoothFilter.getFilteredValues(floatFilterValues));
-            AccelerometerReading reading  = new AccelerometerReading(mUserID,"Mobile","",timestamp_in_milliseconds,floatFilterValues);
+            AccelerometerReading reading  = new AccelerometerReading(mUserID,"Mobile","",timestamp_in_milliseconds,finalData);
             broadcastAccelerometerReading(timestamp_in_milliseconds,event.values);
             mClient.sendSensorReading(reading);
             //TODO: broadcast the accelerometer reading to the UI
