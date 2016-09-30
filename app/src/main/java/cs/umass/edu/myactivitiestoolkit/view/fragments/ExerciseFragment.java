@@ -212,6 +212,9 @@ public class ExerciseFragment extends Fragment {
                         mPeakTimestamps.add(timestamp);
                         mPeakValues.add(values[2]); //place on z-axis signal
                     }
+                }else if(intent.getAction().equals(Constants.ACTION.BROADCAST_SERVER_STEP_COUNT)){
+                    int stepCount = intent.getIntExtra(Constants.KEY.STEP_COUNT,0);
+                    displayServerStepCount(stepCount);
                 }
             }
         }
@@ -330,6 +333,7 @@ public class ExerciseFragment extends Fragment {
         filter.addAction(Constants.ACTION.BROADCAST_ACCELEROMETER_PEAK);
         filter.addAction(Constants.ACTION.BROADCAST_ANDROID_STEP_COUNT);
         filter.addAction(Constants.ACTION.BROADCAST_LOCAL_STEP_COUNT);
+        filter.addAction(Constants.ACTION.BROADCAST_SERVER_STEP_COUNT);
         broadcastManager.registerReceiver(receiver, filter);
     }
 
@@ -389,6 +393,14 @@ public class ExerciseFragment extends Fragment {
         });
     }
 
+    private  void displayServerStepCount(final int stepCount) {
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                txtServerStepCount.setText(String.format(Locale.getDefault(), getString(R.string.server_step_count), stepCount));
+            }
+        });
+    }
 
     /**
      * Clears the x, y, z and peak plot data series.

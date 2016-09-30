@@ -39,6 +39,11 @@ pendingZeroDataCounter = 0
 send_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 send_socket.connect(("none.cs.umass.edu", 9999))
 
+def calculateSlope(sTime,eTime,sValue,eValue):
+    doubleSlope = (eValue - sValue)/(eTime-sTime)*math.pow(10,4)*1.5
+    # print("=============> my slope is{}".format(int(doubleSlope)))
+    return int(doubleSlope)
+
 def onStepDetected(timestamp):
     """
     Notifies the client that a step has been detected.
@@ -56,10 +61,71 @@ def detectSteps(timestamp, filteredValues):
     When a step has been detected, call the onStepDetected method, passing
     in the timestamp.
     """
-    print(filteredValues)
-    vectorProdcuts = (filteredValues[0] ** 2)+(filteredValues[1] ** 2) +(filteredValues ** 2)
+    global count,status,dataCounter,startTime,startValue,pendingZeroDataCounter
+    vectorProdcuts = math.pow(filteredValues[0],2)+math.pow(filteredValues[1],2)+math.pow(filteredValues[2],2)
     vectorSqrt = math.sqrt(vectorProdcuts)
-    print(vectorSqrt)
+    if(dataCounter == 0):
+        startValue = vectorSqrt
+        startTime = timestamp
+
+    if(status=="natural"):
+        print("I am natural")
+        if(dataCounter == 5):
+            slope = calculateSlope(startTime,timestamp,startValue,vectorSqrt)
+            dataCounter = 0
+            if(slope>0):
+                status = "increasing"
+            else:
+                if(slope<0):
+                    status = "decreasing"
+                else:
+                    status = "natural"
+        else:
+            dataCounter += 1
+
+    if(status=="increasing"):
+        print("I am increasing")
+        if(dataCounter == 5):
+            slope = calculateSlope(startTime,timestamp,startValue,vectorSqrt)
+            dataCounter = 0
+            if(slope>0):
+                pendingZeroDataCounter = 0
+                status = "increasing"
+            else:
+                if(slope<0):
+                    print("============>I got a step")
+                    onStepDetected(timestamp)
+                    pendingZeroDataCounter = 0
+                    status = "decreasing"
+                else:
+                    pendingZeroDataCounter += 1
+        else:
+            dataCounter += 1
+
+    if(status=="decreasing"):
+        print("I am decreasing")
+        if(dataCounter == 5):
+            slope = calculateSlope(startTime,timestamp,startValue,vectorSqrt)
+            dataCounter = 0
+            if(slope>0):
+                print("============>I got a step")
+                onStepDetected(timestamp)
+                pendingZeroDataCounter = 0
+                status = "increasing"
+            else:
+                if(slope<0):
+                    status = "decreasing"
+                    pendingZeroDataCounter = 0
+                else:
+                    pendingZeroDataCounter += 1
+        else:
+            dataCounter += 1
+
+    if(pendingZeroDataCounter == 10):
+        print("Natural pending max reached, reset status")
+        status = "natural"
+        dataCounter = 0
+        pendingZeroDataCounter = 0;
     return
 
 

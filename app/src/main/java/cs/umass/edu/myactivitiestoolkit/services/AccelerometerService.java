@@ -103,6 +103,8 @@ public class AccelerometerService extends SensorService implements SensorEventLi
     /** The step count as predicted by the Android built-in step detection algorithm. */
     private int mAndroidStepCount = 0;
 
+    private  int mServerStepCount = 0;
+
     public AccelerometerService(){
         mStepDetector = new StepDetector();
     }
@@ -123,11 +125,13 @@ public class AccelerometerService extends SensorService implements SensorEventLi
         mClient.registerMessageReceiver(new MessageReceiver(Constants.MHLClientFilter.STEP_DETECTED) {
             @Override
             protected void onMessageReceived(JSONObject json) {
-                Log.d(TAG, "Received step update from server.");
+                Log.w(TAG, "Received step update from server.");
                 try {
                     JSONObject data = json.getJSONObject("data");
                     long timestamp = data.getLong("timestamp");
-                    Log.d(TAG, "Step occurred at " + timestamp + ".");
+                    Log.w(TAG, "Step occurred at " + timestamp + ".");
+                    mServerStepCount  += 1;
+                    broadcastServerStepCount(mServerStepCount);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -306,7 +310,13 @@ public class AccelerometerService extends SensorService implements SensorEventLi
 
 
     // TODO: (Assignment 1) Broadcast the step count as computed by your server-side algorithm.
-
+    public void broadcastServerStepCount(int stepCount) {
+        Intent intent = new Intent();
+        intent.putExtra(Constants.KEY.STEP_COUNT, stepCount);
+        intent.setAction(Constants.ACTION.BROADCAST_SERVER_STEP_COUNT);
+        LocalBroadcastManager manager = LocalBroadcastManager.getInstance(this);
+        manager.sendBroadcast(intent);
+    }
 
     /**
      * Broadcasts a step event to other application components, e.g. the main UI.
