@@ -166,7 +166,7 @@ public class StepDetector implements SensorEventListener {
 //        Log.w("My endValue is ", ""+eValue);
 //        Log.w("My startTime is", ""+startTime);
 //        Log.w("My endTime is ", ""+endTime);
-        double slope = ((eValue-sValue)/(endTime-startTime))*Math.pow(10,9)*8;
+        double slope = ((eValue-sValue)/(endTime-startTime))*Math.pow(10,9)*5;
         Log.w("My current slope ", ""+slope);
         return (int)slope;
     }
