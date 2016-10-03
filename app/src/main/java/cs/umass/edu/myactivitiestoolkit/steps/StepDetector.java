@@ -84,7 +84,7 @@ public class StepDetector implements SensorEventListener {
             double[] filterValues = smoothFilter.getFilteredValues(convertToFloatArray(doublesFilterValue));
             //TODO: Detect steps! Call onStepDetected(...) when a step is detected.
             double vectorProducts = Math.pow(filterValues[0],2)+Math.pow(filterValues[1],2)+
-                    Math.pow(filterValues[2],1);
+                    Math.pow(filterValues[2],2);
             double vectorSqrt = Math.sqrt(vectorProducts);
             if(dataCounter == 0) {
                 startValue = vectorSqrt;
