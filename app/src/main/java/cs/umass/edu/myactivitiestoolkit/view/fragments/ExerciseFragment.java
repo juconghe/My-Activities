@@ -222,6 +222,11 @@ public class ExerciseFragment extends Fragment {
                 }else if(intent.getAction().equals(Constants.ACTION.BROADCAST_SERVER_STEP_COUNT)){
                     int stepCount = intent.getIntExtra(Constants.KEY.STEP_COUNT,0);
                     displayServerStepCount(stepCount);
+                }else if(intent.getAction().equals(Constants.ACTION.BROADCAST_ACTIVITY)) {
+                    Log.w("======>", "onReceive: here");
+                    String activity = intent.getStringExtra(Constants.KEY.ACTIVITY);
+                    Log.d("=========>", "onReceive: "+activity);
+                    updateLabel(activity);
                 }
             }
         }
@@ -333,6 +338,9 @@ public class ExerciseFragment extends Fragment {
         return view;
     }
 
+    public void updateLabel(String activity) {
+        txtActivity.setText(activity);
+    }
     /**
      * When the fragment starts, register a {@link #receiver} to receive messages from the
      * {@link AccelerometerService}. The intent filter defines messages we are interested in receiving.

@@ -92,7 +92,6 @@ public class StepDetector implements SensorEventListener {
             }
             switch (status) {
                 case NATURAL: {
-                    Log.d("=======>", "I am natural now");
                     if(dataCounter==15){
                         double endTime = ((double) event.timestamp);
                         int slope = slopeTimesTen(startTime,endTime,startValue,vectorSqrt);
@@ -110,7 +109,6 @@ public class StepDetector implements SensorEventListener {
                     break;
                 }
                 case INCREASING: {
-                    Log.d("=======>", "I am increasing now");
                     if(dataCounter==15){
                         double endTime = ((double) event.timestamp);
                         int slope = slopeTimesTen(startTime,endTime,startValue,vectorSqrt);
@@ -131,7 +129,6 @@ public class StepDetector implements SensorEventListener {
                     break;
                 }
                 case DECREASING: {
-                    Log.d("=======>", "I am decreasing now");
                     if(dataCounter==15){
                         double endTime = ((double) event.timestamp);
                         int slope = slopeTimesTen(startTime,endTime,startValue,vectorSqrt);
@@ -153,7 +150,6 @@ public class StepDetector implements SensorEventListener {
                 }
             }
                 if (pendingZeroDataCounter == 10) {
-                    Log.d("=======>", "Natural pending max reach reset status");
                     status = NATURAL;
                     dataCounter = 0;
                     pendingZeroDataCounter = 0;
@@ -167,7 +163,6 @@ public class StepDetector implements SensorEventListener {
 //        Log.w("My startTime is", ""+startTime);
 //        Log.w("My endTime is ", ""+endTime);
         double slope = ((eValue-sValue)/(endTime-startTime))*Math.pow(10,9)*3;
-        Log.w("My current slope ", ""+slope);
         return (int)slope;
     }
 
