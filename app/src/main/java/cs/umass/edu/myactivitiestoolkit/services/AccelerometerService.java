@@ -13,13 +13,15 @@ import android.widget.Toast;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Locale;
+import java.io.BufferedWriter;
+import org.apache.commons.io.IOUtils;
 
 import cs.umass.edu.myactivitiestoolkit.R;
 import cs.umass.edu.myactivitiestoolkit.constants.Constants;
 import cs.umass.edu.myactivitiestoolkit.processing.Filter;
 import cs.umass.edu.myactivitiestoolkit.steps.OnStepListener;
 import cs.umass.edu.myactivitiestoolkit.steps.StepDetector;
+import cs.umass.edu.myactivitiestoolkit.storage.FileUtil;
 import edu.umass.cs.MHLClient.client.MessageReceiver;
 import edu.umass.cs.MHLClient.client.MobileIOClient;
 import edu.umass.cs.MHLClient.sensors.AccelerometerReading;
@@ -104,6 +106,10 @@ public class AccelerometerService extends SensorService implements SensorEventLi
     private int mAndroidStepCount = 0;
 
     private  int mServerStepCount = 0;
+
+    static int label = 0;
+
+//    private final BufferedWriter writer = FileUtil.getFileWriter("ACCEL");
 
     public AccelerometerService(){
         mStepDetector = new StepDetector();
@@ -224,6 +230,9 @@ public class AccelerometerService extends SensorService implements SensorEventLi
      * @see #broadcastAccelerometerReading(long, float[])
      */
 
+    public static void changeLabel(int newlabel) {
+        label = newlabel;
+    }
     @Override
     public void onSensorChanged(SensorEvent event) {
 //        Log.d(TAG, "X : " + event.values[0] + ", Y : " +
@@ -240,7 +249,11 @@ public class AccelerometerService extends SensorService implements SensorEventLi
             double[] filterValues = bufferingFilter.getFilteredValues(event.values);
             float[] floatFilterValues = convertToFloatArray(filterValues);
             float[] finalData = convertToFloatArray(smoothFilter.getFilteredValues(floatFilterValues));
-            AccelerometerReading reading  = new AccelerometerReading(mUserID,"Mobile","",timestamp_in_milliseconds,finalData);
+            Log.d("=========>", "My current label is "+label);
+//            synchronized(writer) {
+//                FileUtil.writeToFile(timestamp_in_milliseconds + "," + finalData[0] + "," + finalData[1] + "," + finalData[2] + "," + label, writer);
+//            }
+            AccelerometerReading reading  = new AccelerometerReading(mUserID,"Mobile","",timestamp_in_milliseconds,label,finalData);
             broadcastAccelerometerReading(timestamp_in_milliseconds,event.values);
             mClient.sendSensorReading(reading);
             //TODO: broadcast the accelerometer reading to the UI

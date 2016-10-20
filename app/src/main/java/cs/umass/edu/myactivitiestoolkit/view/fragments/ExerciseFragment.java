@@ -11,9 +11,11 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -113,6 +115,11 @@ public class ExerciseFragment extends Fragment {
 
     /** The series formatter that defines how the peaks should be displayed. **/
     private LineAndPointFormatter mPeakSeriesFormatter;
+
+    private Button btn_walking;
+    private Button btn_running;
+    private Button btn_sitting;
+    private Button btn_jogging;
 
     /** The number of data points to display in the graph. **/
     private static final int GRAPH_CAPACITY = 100;
@@ -230,6 +237,32 @@ public class ExerciseFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         final View view = inflater.inflate(R.layout.fragment_exercise, container, false);
+
+        btn_walking = (Button)view.findViewById(R.id.button_walking);
+        btn_running = (Button)view.findViewById(R.id.button_running);
+        btn_jogging = (Button)view.findViewById(R.id.button_jogging);
+        btn_sitting = (Button)view.findViewById(R.id.button_sitting);
+
+        btn_sitting.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                AccelerometerService.changeLabel(2);
+            }
+        });
+        btn_walking.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                AccelerometerService.changeLabel(0);
+            }
+        });
+        btn_jogging.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                AccelerometerService.changeLabel(3);
+            }
+        });
+        btn_running.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                AccelerometerService.changeLabel(1);
+            }
+        });
 
         //obtain a reference to the accelerometer reading text field
         txtAccelerometerReading = (TextView) view.findViewById(R.id.txtAccelerometerReading);

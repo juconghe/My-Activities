@@ -22,6 +22,7 @@
     your needs: You may customize your UI as little or as much as you please.
   -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ap="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent" android:background="@color/background_steps">
@@ -120,21 +121,59 @@
     </LinearLayout>
 
 
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:ap="http://schemas.android.com/apk/res-auto"
-        android:layout_below="@id/layoutAccelerometer"
-        android:layout_height="match_parent"
-        android:layout_width="match_parent">
+    <LinearLayout
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_below="@+id/layoutAccelerometer">
 
         <com.androidplot.xy.XYPlot
             style="@style/APDefacto.Light"
             android:id="@+id/accelerometerPlot"
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
+            android:layout_height="398dp"
             ap:title="Accelerometer Signal"
             ap:rangeTitle="m/s^2"
             ap:lineLabels="left|bottom"
             ap:lineLabelRotationBottom="-45"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/linearLayout5">
+
+        <Button
+            android:text="Walking"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/button_walking"
+            android:layout_weight="1" />
+
+        <Button
+            android:text="running"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/button_running"
+            android:layout_weight="1" />
+
+        <Button
+            android:text="sitting"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/button_sitting"
+            android:layout_weight="1" />
+
+        <Button
+            android:text="jogging"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/button_jogging"
+            android:layout_weight="1" />
     </LinearLayout>
 
 </RelativeLayout>
