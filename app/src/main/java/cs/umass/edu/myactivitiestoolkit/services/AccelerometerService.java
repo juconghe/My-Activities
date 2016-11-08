@@ -108,6 +108,8 @@ public class AccelerometerService extends SensorService implements SensorEventLi
     private  int mServerStepCount = 0;
 
     static int label = 0;
+    Filter bufferingFilter = new Filter(3.0);
+    Filter smoothFilter = new Filter(1);
 
 //    private final BufferedWriter writer = FileUtil.getFileWriter("ACCEL");
 
@@ -239,8 +241,7 @@ public class AccelerometerService extends SensorService implements SensorEventLi
     public void onSensorChanged(SensorEvent event) {
 //        Log.d(TAG, "X : " + event.values[0] + ", Y : " +
 //                event.values[1] + ", Z : " + event.values[2]);
-        Filter bufferingFilter = new Filter(3.0);
-        Filter smoothFilter = new Filter(1);
+
 
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
 
