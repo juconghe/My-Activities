@@ -19,6 +19,7 @@ import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import cs.umass.edu.myactivitiestoolkit.R;
@@ -58,6 +59,7 @@ public class AudioFragment extends Fragment {
     /** Reference to the service manager which communicates to the {@link PPGService}. **/
     private ServiceManager serviceManager;
 
+    private TextView speaker;
     /**
      * The receiver listens for messages from the {@link AccelerometerService}, e.g. was the
      * service started/stopped, and updates the status views accordingly. It also
@@ -75,6 +77,9 @@ public class AudioFragment extends Fragment {
                 } else if (intent.getAction().equals(Constants.ACTION.BROADCAST_SPECTROGRAM)){
                     double[][] spectrogram = (double[][]) intent.getSerializableExtra(Constants.KEY.SPECTROGRAM);
                     updateSpectrogram(spectrogram);
+                }else if(intent.getAction().equals(Constants.ACTION.BROADCAST_SPEAKER)) {
+                    String speaker = intent.getStringExtra(Constants.KEY.SPEAKER);
+                    updateSpeaker(speaker);
                 }
             }
         }
@@ -103,6 +108,7 @@ public class AudioFragment extends Fragment {
             }
         });
         imgSpectrogram = (ImageView) rootView.findViewById(R.id.imgSpectrogram);
+        speaker = (TextView) rootView.findViewById(R.id.speaker);
         return rootView;
     }
 
@@ -133,6 +139,7 @@ public class AudioFragment extends Fragment {
         IntentFilter filter = new IntentFilter();
         filter.addAction(Constants.ACTION.BROADCAST_MESSAGE);
         filter.addAction(Constants.ACTION.BROADCAST_SPECTROGRAM);
+        filter.addAction(Constants.ACTION.BROADCAST_SPEAKER);
         broadcastManager.registerReceiver(receiver, filter);
     }
 
@@ -231,6 +238,9 @@ public class AudioFragment extends Fragment {
         imgSpectrogram.setImageBitmap(bitmap);
     }
 
+    private void updateSpeaker(String speaker) {
+        this.speaker.setText(speaker);
+    }
     /**
      * Converts the value to a corresponding heat map color
      * @param minimum the minimum bound on the value
