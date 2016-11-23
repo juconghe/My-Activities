@@ -88,7 +88,7 @@ public class AudioService extends SensorService implements MicrophoneRecorder.Mi
                     e.printStackTrace();
                     return;
                 }
-                // TODO: Send the speaker to the UI
+                broadcastSpeaker(speaker);
             }
         });
         super.onConnected();
@@ -121,6 +121,13 @@ public class AudioService extends SensorService implements MicrophoneRecorder.Mi
         manager.sendBroadcast(intent);
     }
 
+    public  void broadcastSpeaker(String speaker) {
+        Intent intent = new Intent();
+        intent.putExtra(Constants.KEY.SPEAKER,speaker);
+        intent.setAction(Constants.ACTION.BROADCAST_SPEAKER);
+        LocalBroadcastManager manager = LocalBroadcastManager.getInstance(this);
+        manager.sendBroadcast(intent);
+    }
     /**
      * Called when an audio buffer is received. We compute and visualize the spectrogram
      * for you.
@@ -143,6 +150,9 @@ public class AudioService extends SensorService implements MicrophoneRecorder.Mi
         Log.d(TAG, String.valueOf(buffer.length));
 
         //TODO: Send the audio buffer to the server
+        ;
+        AudioBufferReading reading = new AudioBufferReading(mUserID,"Mobile","",1,buffer);
+        mClient.sendSensorReading(reading);
 
         //convert short[] to double[] for computing spectrogram
         double[] dBuffer = new double[buffer.length];
