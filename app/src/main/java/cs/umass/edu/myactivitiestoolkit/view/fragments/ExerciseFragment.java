@@ -363,7 +363,7 @@ public class ExerciseFragment extends Fragment {
      * @see LocalBroadcastManager
      * @see #receiver
      */
-    @Overridek
+    @Override
     public void onStart() {
         super.onStart();
 

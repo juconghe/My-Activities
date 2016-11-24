@@ -59,7 +59,7 @@ public class LocationService extends SensorService implements LocationListener {
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
-        Log.d(TAG, "Starting location manager");
+        Log.w(TAG, "Starting location manager");
         locationManager.requestLocationUpdates(
                 LocationManager.GPS_PROVIDER,
                 MIN_TIME,
