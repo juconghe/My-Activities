@@ -38,6 +38,7 @@ public class DBScan<T extends Clusterable<T>> {
 
     /** The state of a point - is it in a cluster or has it been marked as noise? */
     private enum State {
+        VISITED,
         /** The point has not yet been visited */
         UNVISITED,
         /** The point has been visited and has determined to be noise (no cluster) */
@@ -95,15 +96,17 @@ public class DBScan<T extends Clusterable<T>> {
         }
 
         //TODO: Implement the DBScan algorithm - currently the code returns a single cluster containing all points
-
-        //TODO: The following block of code adds all points to a single cluster. Make sure to remove this!
-        {
-            Cluster<T> fakeCluster = new Cluster<T>();
-            for (final T p : points)
-                fakeCluster.addPoint(p);
-            clusters.add(fakeCluster);
+        for(T p:points) {
+            states.put(p,State.VISITED);
+            List<T> neighborPts = regionQuery(p,points);
+            if(neighborPts.size()<getMinPts()) {
+                states.put(p,State.NOISE);
+            }else {
+                Cluster<T> C = new Cluster<T>();
+                clusters.add(C);
+                expandCluster(C,p,states,neighborPts,points);
+            }
         }
-
         return clusters;
 
     }
@@ -127,6 +130,18 @@ public class DBScan<T extends Clusterable<T>> {
         states.put(p, State.CLUSTERED);
 
         //TODO: Complete the rest of the expandCluster algorithm, as outlined in the slides
+        for(T point:neighborPts) {
+            if(states.get(p)==State.UNVISITED) {
+                states.put(p,State.VISITED);
+                List<T> newNeighborPts = regionQuery(p,points);
+                if(newNeighborPts.size()>=getMinPts()) {
+                    addAsSet(neighborPts,newNeighborPts);
+                }
+            }
+            if(states.get(p)==State.VISITED) {
+                cluster.addPoint(p);
+            }
+        }
     }
 
     /**
@@ -140,6 +155,11 @@ public class DBScan<T extends Clusterable<T>> {
     private List<T> regionQuery(final T p, final Collection<T> points) {
         //TODO: Query the region around point p to get its neighbors, that is all points within eps of p
         final List<T> neighbors = new ArrayList<T>();
+        for(T point:points) {
+            if(Math.abs(p.distance(point))>=getEps()){
+                neighbors.add(point);
+            }
+        }
         return neighbors;
     }
 

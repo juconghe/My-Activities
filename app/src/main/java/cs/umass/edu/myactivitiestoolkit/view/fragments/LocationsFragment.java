@@ -219,6 +219,10 @@ public class LocationsFragment extends Fragment {
             @Override
             public void onMapReady(GoogleMap mMap) {
                 LocationsFragment.this.map = mMap;
+                /* This is a debug block of code
+                LatLng sydney = new LatLng(-34, 151);
+                map.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
+                map.moveCamera(CameraUpdateFactory.newLatLng(sydney)); */
             }
         });
 
