@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.util.ArrayMap;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -42,6 +43,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -372,8 +374,26 @@ public class LocationsFragment extends Fragment {
     private void drawClusters(final Collection<Cluster<GPSLocation>> clusters){
         final int[] colors = new int[]{Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.CYAN, Color.WHITE};
         // TODO: For each cluster, draw a convex hull around the points in a sufficiently distinct color
+        Log.w("==============>", "Method execute the size of cluster is "+clusters.size());
+        int index = 0;
+        for(Cluster<GPSLocation> cluster:clusters){
+            if(index == colors.length)
+                index = 0;
+
+            ArrayList<GPSLocation> locations = cluster.getPoints();
+            GPSLocation[] arrayLocations = convertToArray(locations);
+            drawHullFromPoints(arrayLocations,colors[index]);
+            index++;
+        }
     }
 
+    private GPSLocation[] convertToArray(ArrayList<GPSLocation> locations){
+        GPSLocation[] temp = new GPSLocation[locations.size()];
+        for(int i = 0;i < locations.size();i++){
+            temp[i] = locations.get(i);
+        }
+        return  temp;
+    }
     /**
      * Here you will call your DBScan algorithm, with the given parameters. Then
      * call {@link #drawClusters(Collection)} in order to visualize your output.
@@ -383,6 +403,9 @@ public class LocationsFragment extends Fragment {
      */
     private void runDBScan(GPSLocation[] locations, float eps, int minPts){
         //TODO: Cluster the locations by calling DBScan.
+        DBScan dbScan = new DBScan(eps,minPts);
+        ArrayList<GPSLocation> points = FastConvexHull.execute(locations);
+        drawClusters(dbScan.cluster(points));
     }
 
     /**
@@ -520,6 +543,7 @@ public class LocationsFragment extends Fragment {
      * @param locations the set of locations contained in the convex hull
      */
     private void drawHullFromPoints(GPSLocation[] locations, int color){
+        Log.w("==============>", "Method execute the size of location is "+locations.length);
         if (locations.length <= 2) return;
         ArrayList<GPSLocation> hull = FastConvexHull.execute(locations);
         PolygonOptions options = new PolygonOptions();
