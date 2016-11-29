@@ -131,7 +131,8 @@ public class DBScan<T extends Clusterable<T>> {
         states.put(p, State.CLUSTERED);
 
         //TODO: Complete the rest of the expandCluster algorithm, as outlined in the slides
-        for(T point:neighborPts) {
+        for(int i = 0; i<neighborPts.size();i++) {
+            T point = neighborPts.get(i);
             if(states.get(point)==State.UNVISITED) {
                 List<T> newNeighborPts = regionQuery(point,points);
                 if(newNeighborPts.size()>=getMinPts()) {

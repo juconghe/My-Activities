@@ -394,6 +394,14 @@ public class LocationsFragment extends Fragment {
         }
         return  temp;
     }
+
+    private  ArrayList<GPSLocation> convertToArrayList(GPSLocation[] locations) {
+        ArrayList<GPSLocation> temp = new ArrayList<GPSLocation>();
+        for(GPSLocation location:locations) {
+            temp.add(location);
+        }
+        return  temp;
+    }
     /**
      * Here you will call your DBScan algorithm, with the given parameters. Then
      * call {@link #drawClusters(Collection)} in order to visualize your output.
@@ -404,7 +412,7 @@ public class LocationsFragment extends Fragment {
     private void runDBScan(GPSLocation[] locations, float eps, int minPts){
         //TODO: Cluster the locations by calling DBScan.
         DBScan dbScan = new DBScan(eps,minPts);
-        ArrayList<GPSLocation> points = FastConvexHull.execute(locations);
+        ArrayList<GPSLocation> points = convertToArrayList(locations);
         drawClusters(dbScan.cluster(points));
     }
 
