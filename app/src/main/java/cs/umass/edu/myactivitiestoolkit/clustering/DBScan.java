@@ -99,13 +99,15 @@ public class DBScan<T extends Clusterable<T>> {
 
         //TODO: Implement the DBScan algorithm - currently the code returns a single cluster containing all points
         for(T p:points) {
-            List<T> neighborPts = regionQuery(p,points);
-            if(neighborPts.size()<getMinPts()) {
-                states.put(p,State.NOISE);
-            }else {
-                Cluster<T> C = new Cluster<T>();
-                clusters.add(C);
-                expandCluster(C,p,states,neighborPts,points);
+            if(states.get(p) == State.UNVISITED) {
+                List<T> neighborPts = regionQuery(p, points);
+                if (neighborPts.size() < getMinPts()) {
+                    states.put(p, State.NOISE);
+                } else {
+                    Cluster<T> C = new Cluster<T>();
+                    clusters.add(C);
+                    expandCluster(C, p, states, neighborPts, points);
+                }
             }
         }
         return clusters;
