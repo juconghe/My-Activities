@@ -1,10 +1,12 @@
 package cs.umass.edu.myactivitiestoolkit.view.activities;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v13.app.FragmentPagerAdapter;
@@ -14,7 +16,21 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
+
+import com.microsoft.band.BandClient;
+import com.microsoft.band.BandClientManager;
+import com.microsoft.band.BandException;
+import com.microsoft.band.BandInfo;
+import com.microsoft.band.ConnectionState;
+import com.microsoft.band.UserConsent;
+import com.microsoft.band.sensors.BandHeartRateEvent;
+import com.microsoft.band.sensors.BandHeartRateEventListener;
+import com.microsoft.band.sensors.HeartRateConsentListener;
+
+import java.lang.ref.WeakReference;
 
 import cs.umass.edu.myactivitiestoolkit.R;
 import cs.umass.edu.myactivitiestoolkit.constants.Constants;
@@ -45,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
     /** used for debugging purposes */
     private static final String TAG = MainActivity.class.getName();
 
+    private BandClient client = null;
     /**
      * Defines all available tabs in the main UI. For help on enums,
      * see the <a href="https://docs.oracle.com/javase/tutorial/java/javaOO/enum.html">Java documentation</a>.
@@ -182,6 +199,7 @@ public class MainActivity extends AppCompatActivity {
 
     /** Displays status messages, e.g. connection station. **/
     private TextView txtStatus;
+    private Button consentBtn;
 
     @Override
     protected void onStart() {
@@ -202,6 +220,15 @@ public class MainActivity extends AppCompatActivity {
             broadcastManager.unregisterReceiver(receiver);
         }catch (IllegalArgumentException e){
             e.printStackTrace();
+        }
+        if (client != null) {
+            try {
+                client.disconnect().await();
+            } catch (InterruptedException e) {
+                // Do nothing as this is happening during destroy
+            } catch (BandException e) {
+                // Do nothing as this is happening during destroy
+            }
         }
         super.onStop();
     }
@@ -246,7 +273,7 @@ public class MainActivity extends AppCompatActivity {
         tabLayout.setupWithViewPager(viewPager);
 
         txtStatus = (TextView) findViewById(R.id.status);
-
+        consentBtn = (Button) findViewById((R.id.grantConsent));
         // if the activity was started by clicking a notification, then the intent contains the
         // notification ID and can be used to set the proper tab.
         if (getIntent() != null) {
@@ -266,6 +293,12 @@ public class MainActivity extends AppCompatActivity {
                     break;
             }
         }
+        consentBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new HeartRateConsentTask().execute();
+            }
+        });
     }
 
     @Override
@@ -329,4 +362,123 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+
+    private BandHeartRateEventListener mHeartRateEventListener = new BandHeartRateEventListener() {
+        @Override
+        public void onBandHeartRateChanged(final BandHeartRateEvent event) {
+            if (event != null) {
+                broadcastStatus(String.format("Heart Rate = %d beats per minute\n"
+                        + "Quality = %s\n", event.getHeartRate(), event.getQuality()));
+            }
+        }
+    };
+
+    //Need to get user consent
+    private class HeartRateConsentTask extends AsyncTask<WeakReference<Activity>, Void, Void> {
+        @Override
+        protected Void doInBackground(WeakReference<Activity>... params) {
+            try {
+                if (getConnectedBandClient()) {
+                    Log.w("=====>","No exception getting client");
+                    if (params[0].get() != null) {
+                        client.getSensorManager().requestHeartRateConsent(MainActivity.this, new HeartRateConsentListener() {
+                            @Override
+                            public void userAccepted(boolean consentGiven) {
+//                                new HeartRateSubscriptionTask().execute();
+                                Log.w("=====>","No exception getting getConsent");
+                            }
+                        });
+                    }
+                } else {
+                    broadcastStatus("Band isn't connected. Please make sure bluetooth is on and the band is in range.\n");
+                }
+            } catch (BandException e) {
+                String exceptionMessage="";
+                switch (e.getErrorType()) {
+                    case UNSUPPORTED_SDK_VERSION_ERROR:
+                        exceptionMessage = "Microsoft Health BandService doesn't support your SDK Version. Please update to latest SDK.\n";
+                        break;
+                    case SERVICE_ERROR:
+                        exceptionMessage = "Microsoft Health BandService is not available. Please make sure Microsoft Health is installed and that you have the correct permissions.\n";
+                        break;
+                    default:
+                        exceptionMessage = "Unknown error occured: " + e.getMessage() + "\n";
+                        break;
+                }
+                broadcastStatus(exceptionMessage);
+
+            } catch (Exception e) {
+                Log.w(TAG, "doInBackground: "+params.length+"" );
+                broadcastStatus("Exception"+e.getMessage());
+            }
+            return null;
+        }
+    }
+
+    //Kick off the heart rate reading
+    private class HeartRateSubscriptionTask extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                if (getConnectedBandClient()) {
+                    if (client.getSensorManager().getCurrentHeartRateConsent() == UserConsent.GRANTED) {
+                        client.getSensorManager().registerHeartRateEventListener(mHeartRateEventListener);
+                    } else {
+                        broadcastStatus("You have not given this application consent to access heart rate data yet."
+                                + " Please press the Heart Rate Consent button.\n");
+                    }
+                } else {
+                    broadcastStatus("Band isn't connected. Please make sure bluetooth is on and the band is in range.\n");
+                }
+            } catch (BandException e) {
+                String exceptionMessage="";
+                switch (e.getErrorType()) {
+                    case UNSUPPORTED_SDK_VERSION_ERROR:
+                        exceptionMessage = "Microsoft Health BandService doesn't support your SDK Version. Please update to latest SDK.\n";
+                        break;
+                    case SERVICE_ERROR:
+                        exceptionMessage = "Microsoft Health BandService is not available. Please make sure Microsoft Health is installed and that you have the correct permissions.\n";
+                        break;
+                    default:
+                        exceptionMessage = "Unknown error occured: " + e.getMessage() + "\n";
+                        break;
+                }
+                broadcastStatus(exceptionMessage);
+
+            } catch (Exception e) {
+                broadcastStatus(e.getMessage());
+            }
+            return null;
+        }
+    }
+
+    //Get connection to band
+    private boolean getConnectedBandClient() throws InterruptedException, BandException {
+
+        if (client == null) {
+            Log.w("=====>","Client is null");
+            //Find paired bands
+            BandInfo[] devices = BandClientManager.getInstance().getPairedBands();
+            if (devices.length == 0) {
+                //No bands found...message to user
+                return false;
+            }
+            //need to set client if there are devices
+            client = BandClientManager.getInstance().create(getBaseContext(), devices[0]);
+        } else if(ConnectionState.CONNECTED == client.getConnectionState()) {
+            Log.w("=====>","Client is not null");
+            return true;
+        }
+
+        //need to return connected status
+        return ConnectionState.CONNECTED == client.connect().await();
+    }
+
+    private void broadcastStatus(String message) {
+        Intent intent = new Intent();
+        intent.putExtra(Constants.KEY.STATUS, message);
+        intent.setAction(Constants.ACTION.BROADCAST_STATUS);
+        LocalBroadcastManager manager = LocalBroadcastManager.getInstance(this);
+        manager.sendBroadcast(intent);
+    }
 }
