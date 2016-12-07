@@ -62,6 +62,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getName();
 
     private BandClient client = null;
+    final WeakReference<Activity> reference = new WeakReference<Activity>(this);
+
     /**
      * Defines all available tabs in the main UI. For help on enums,
      * see the <a href="https://docs.oracle.com/javase/tutorial/java/javaOO/enum.html">Java documentation</a>.
@@ -296,7 +298,7 @@ public class MainActivity extends AppCompatActivity {
         consentBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new HeartRateConsentTask().execute();
+                new HeartRateConsentTask().execute(reference);
             }
         });
     }
@@ -363,15 +365,6 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    private BandHeartRateEventListener mHeartRateEventListener = new BandHeartRateEventListener() {
-        @Override
-        public void onBandHeartRateChanged(final BandHeartRateEvent event) {
-            if (event != null) {
-                broadcastStatus(String.format("Heart Rate = %d beats per minute\n"
-                        + "Quality = %s\n", event.getHeartRate(), event.getQuality()));
-            }
-        }
-    };
 
     //Need to get user consent
     private class HeartRateConsentTask extends AsyncTask<WeakReference<Activity>, Void, Void> {
@@ -415,42 +408,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    //Kick off the heart rate reading
-    private class HeartRateSubscriptionTask extends AsyncTask<Void, Void, Void> {
-        @Override
-        protected Void doInBackground(Void... params) {
-            try {
-                if (getConnectedBandClient()) {
-                    if (client.getSensorManager().getCurrentHeartRateConsent() == UserConsent.GRANTED) {
-                        client.getSensorManager().registerHeartRateEventListener(mHeartRateEventListener);
-                    } else {
-                        broadcastStatus("You have not given this application consent to access heart rate data yet."
-                                + " Please press the Heart Rate Consent button.\n");
-                    }
-                } else {
-                    broadcastStatus("Band isn't connected. Please make sure bluetooth is on and the band is in range.\n");
-                }
-            } catch (BandException e) {
-                String exceptionMessage="";
-                switch (e.getErrorType()) {
-                    case UNSUPPORTED_SDK_VERSION_ERROR:
-                        exceptionMessage = "Microsoft Health BandService doesn't support your SDK Version. Please update to latest SDK.\n";
-                        break;
-                    case SERVICE_ERROR:
-                        exceptionMessage = "Microsoft Health BandService is not available. Please make sure Microsoft Health is installed and that you have the correct permissions.\n";
-                        break;
-                    default:
-                        exceptionMessage = "Unknown error occured: " + e.getMessage() + "\n";
-                        break;
-                }
-                broadcastStatus(exceptionMessage);
-
-            } catch (Exception e) {
-                broadcastStatus(e.getMessage());
-            }
-            return null;
-        }
-    }
 
     //Get connection to band
     private boolean getConnectedBandClient() throws InterruptedException, BandException {

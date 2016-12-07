@@ -204,7 +204,7 @@ public class BandService extends SensorService implements BandGyroscopeEventList
         Log.d(TAG, "onBandHeartRateChanged: "+bandHeartRateEvent.getHeartRate());
         Object[] data = new Object[]{bandHeartRateEvent.getTimestamp(),
                 bandHeartRateEvent.getHeartRate(), bandHeartRateEvent.getQuality()};
-        Log.w("========>",bandHeartRateEvent.getHeartRate()+"");
+        broadcastStatus(bandHeartRateEvent.getHeartRate()+"");
         mClient.sendSensorReading(new PPGSensorReading(mUserID, "", "", bandHeartRateEvent.getTimestamp(), bandHeartRateEvent.getHeartRate()));
         broadcastBPM(bandHeartRateEvent.getHeartRate());
     }
