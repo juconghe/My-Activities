@@ -1,12 +1,16 @@
 package cs.umass.edu.myactivitiestoolkit.view.fragments;
 
+import android.Manifest;
+import android.annotation.TargetApi;
 import android.app.Fragment;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
@@ -39,9 +43,11 @@ import java.util.Queue;
 
 import cs.umass.edu.myactivitiestoolkit.R;
 import cs.umass.edu.myactivitiestoolkit.constants.Constants;
+import cs.umass.edu.myactivitiestoolkit.services.LocationService;
 import cs.umass.edu.myactivitiestoolkit.services.msband.BandService;
 import cs.umass.edu.myactivitiestoolkit.services.AccelerometerService;
 import cs.umass.edu.myactivitiestoolkit.services.ServiceManager;
+import cs.umass.edu.myactivitiestoolkit.util.PermissionsUtil;
 
 /**
  * Fragment which visualizes the 3-axis accelerometer signal, displays the step count estimates and
@@ -161,6 +167,7 @@ public class ExerciseFragment extends Fragment {
     /** Reference to the service manager which communicates to the {@link AccelerometerService}. **/
     private ServiceManager mServiceManager;
 
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 4;
     /**
      * The receiver listens for messages from the {@link AccelerometerService}, e.g. was the
      * service started/stopped, and updates the status views accordingly. It also
@@ -250,22 +257,22 @@ public class ExerciseFragment extends Fragment {
 
         btn_sitting.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
-                AccelerometerService.changeLabel(2);
+                BandService.changeLabel(2);
             }
         });
         btn_walking.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                AccelerometerService.changeLabel(0);
+                BandService.changeLabel(0);
             }
         });
         btn_jogging.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                AccelerometerService.changeLabel(3);
+                BandService.changeLabel(3);
             }
         });
         btn_running.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                AccelerometerService.changeLabel(1);
+                BandService.changeLabel(1);
             }
         });
 
@@ -293,7 +300,7 @@ public class ExerciseFragment extends Fragment {
                     boolean runOverMSBand = preferences.getBoolean(getString(R.string.pref_msband_key),
                             getResources().getBoolean(R.bool.pref_msband_default));
                     if (runOverMSBand){
-                        mServiceManager.startSensorService(BandService.class);
+                        requestPermissions();
                     }else{
                         mServiceManager.startSensorService(AccelerometerService.class);
                     }
@@ -474,5 +481,56 @@ public class ExerciseFragment extends Fragment {
         mPlot.addSeries(zSeries, mZSeriesFormatter);
         mPlot.addSeries(peaks, mPeakSeriesFormatter);
         mPlot.redraw();
+    }
+
+    /**
+     * Request permissions required for video recording. These include
+     * {@link android.Manifest.permission#WRITE_EXTERNAL_STORAGE WRITE_EXTERNAL_STORAGE},
+     * and {@link android.Manifest.permission#CAMERA CAMERA}. If audio is enabled, then
+     * the {@link android.Manifest.permission#RECORD_AUDIO RECORD_AUDIO} permission is
+     * additionally required.
+     */
+    @TargetApi(Build.VERSION_CODES.M)
+    public void requestPermissions(){
+        String[] permissions = new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION};
+
+        if (!PermissionsUtil.hasPermissionsGranted(getActivity(), permissions)) {
+            requestPermissions(permissions, LOCATION_PERMISSION_REQUEST_CODE);
+            return;
+        }
+        onLocationPermissionGranted();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case LOCATION_PERMISSION_REQUEST_CODE: {
+                //If the request is cancelled, the result array is empty.
+                if (grantResults.length == 0) return;
+
+                for (int i = 0; i < permissions.length; i++){
+                    if (grantResults[i] != PackageManager.PERMISSION_GRANTED){
+                        switch (permissions[i]) {
+                            case Manifest.permission.ACCESS_COARSE_LOCATION:
+                                //TODO: Show status
+                                return;
+                            case Manifest.permission.ACCESS_FINE_LOCATION:
+                                //TODO: Show status
+                                return;
+                            default:
+                                return;
+                        }
+                    }
+                }
+                onLocationPermissionGranted();
+            }
+        }
+    }
+
+    /**
+     * Called when location permissions have been granted by the user.
+     */
+    public void onLocationPermissionGranted(){
+        mServiceManager.startSensorService(BandService.class);
     }
 }

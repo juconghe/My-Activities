@@ -1,12 +1,19 @@
 package cs.umass.edu.myactivitiestoolkit.services.msband;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.AsyncTask;
+import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -29,9 +36,11 @@ import com.microsoft.band.sensors.SampleRate;
 import cs.umass.edu.myactivitiestoolkit.R;
 import cs.umass.edu.myactivitiestoolkit.constants.Constants;
 import cs.umass.edu.myactivitiestoolkit.ppg.PPGSensorReading;
+import cs.umass.edu.myactivitiestoolkit.processing.Filter;
 import cs.umass.edu.myactivitiestoolkit.services.SensorService;
 import cs.umass.edu.myactivitiestoolkit.view.activities.MainActivity;
 import edu.umass.cs.MHLClient.sensors.AccelerometerReading;
+import edu.umass.cs.MHLClient.sensors.GPSReading;
 import edu.umass.cs.MHLClient.sensors.GyroscopeReading;
 
 /**
@@ -49,18 +58,34 @@ import edu.umass.cs.MHLClient.sensors.GyroscopeReading;
  * @see BandClient
  * @see BandGyroscopeEventListener
  */
-public class BandService extends SensorService implements BandGyroscopeEventListener, BandHeartRateEventListener {
+public class BandService extends SensorService implements BandGyroscopeEventListener, BandHeartRateEventListener, LocationListener {
 
     /**
      * used for debugging purposes
      */
     private static final String TAG = BandService.class.getName();
+    Filter bufferingFilter = new Filter(3.0);
+    static int label = 0;
 
     /**
      * The object which receives sensor data from the Microsoft Band
      */
     private BandClient bandClient = null;
 
+    /**
+     * The minimum duration in milliseconds between sensor readings.
+     */
+    private static final int MIN_TIME = 5000;
+
+    /**
+     * Defines the minimum distance in meters between sequential sensor readings.
+     */
+    private static final float MIN_DISTANCE = 0f;
+
+    /**
+     * Manages the GPS sensor.
+     */
+    private LocationManager locationManager;
     @Override
     protected void onServiceStarted() {
         broadcastMessage(Constants.MESSAGE.BAND_SERVICE_STARTED);
@@ -69,6 +94,47 @@ public class BandService extends SensorService implements BandGyroscopeEventList
     @Override
     protected void onServiceStopped() {
         broadcastMessage(Constants.MESSAGE.BAND_SERVICE_STOPPED);
+    }
+
+    /**
+     * Called when the location has changed.
+     * <p>
+     * <p> There are no restrictions on the use of the supplied Location object.
+     *
+     * @param location The new location, as a Location object.
+     */
+    @Override
+    public void onLocationChanged(Location location) {
+        mClient.sendSensorReading(new GPSReading(mUserID, "MOBILE", "", location.getTime(), location.getLatitude(), location.getLongitude()));
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+
+    }
+
+    /**
+     * Called when the provider is enabled by the user.
+     *
+     * @param provider the name of the location provider associated with this
+     *                 update.
+     */
+    @Override
+    public void onProviderEnabled(String provider) {
+
+    }
+
+    /**
+     * Called when the provider is disabled by the user. If requestLocationUpdates
+     * is called on an already disabled provider, this method is called
+     * immediately.
+     *
+     * @param provider the name of the location provider associated with this
+     *                 update.
+     */
+    @Override
+    public void onProviderDisabled(String provider) {
+
     }
 
     /**
@@ -143,6 +209,19 @@ public class BandService extends SensorService implements BandGyroscopeEventList
 
     @Override
     protected void registerSensors() {
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        //make sure we have permission to access location before requesting the sensor.
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        Log.w(TAG, "Starting location manager");
+        locationManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER,
+                MIN_TIME,
+                MIN_DISTANCE,
+                this,
+                getMainLooper());
         new SensorSubscriptionTask().execute();
     }
 
@@ -159,6 +238,13 @@ public class BandService extends SensorService implements BandGyroscopeEventList
                 broadcastStatus(getString(R.string.err_default) + e.getMessage());
             }
         }
+
+        //make sure we have permission to access location before requesting the sensor.
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        locationManager.removeUpdates(this);
     }
 
     @Override
@@ -189,42 +275,31 @@ public class BandService extends SensorService implements BandGyroscopeEventList
         }
     }
 
-
-    //broadcast the bpm to the UI
-    public void broadcastBPM(final int bpm) {
-        Intent intent = new Intent();
-        intent.putExtra(Constants.KEY.HEART_RATE, bpm);
-        intent.setAction(Constants.ACTION.BROADCAST_HEART_RATE);
-        LocalBroadcastManager manager = LocalBroadcastManager.getInstance(this);
-        manager.sendBroadcast(intent);
-    }
-
     @Override
     public void onBandHeartRateChanged(BandHeartRateEvent bandHeartRateEvent) {
-        Log.d(TAG, "onBandHeartRateChanged: "+bandHeartRateEvent.getHeartRate());
-        Object[] data = new Object[]{bandHeartRateEvent.getTimestamp(),
-                bandHeartRateEvent.getHeartRate(), bandHeartRateEvent.getQuality()};
-        broadcastStatus(bandHeartRateEvent.getHeartRate()+"");
-        mClient.sendSensorReading(new PPGSensorReading(mUserID, "", "", bandHeartRateEvent.getTimestamp(), bandHeartRateEvent.getHeartRate()));
-        broadcastBPM(bandHeartRateEvent.getHeartRate());
-    }
+//        broadcastStatus(bandHeartRateEvent.getHeartRate()+"");
+        HeartBeatReading heartBeatReading = new HeartBeatReading(mUserID, "", "", bandHeartRateEvent.getTimestamp(), bandHeartRateEvent.getHeartRate());
+        mClient.sendSensorReading(heartBeatReading);
+}
 
     @Override
     public void onBandGyroscopeChanged(BandGyroscopeEvent event) {
         //TODO: Remove code from starter code
-        Object[] data = new Object[]{event.getTimestamp(),
-                event.getAccelerationX(), event.getAccelerationY(), event.getAccelerationZ(),
-                event.getAngularVelocityX(), event.getAngularVelocityY(), event.getAngularVelocityZ()};
-        mClient.sendSensorReading(new AccelerometerReading(mUserID, "", "", event.getTimestamp(),
-                event.getAccelerationX(), event.getAccelerationY(), event.getAccelerationZ()));
-        broadcastAccelerometerReading(event.getTimestamp(),
-                event.getAccelerationX(), event.getAccelerationY(), event.getAccelerationZ());
-        mClient.sendSensorReading(new GyroscopeReading(mUserID, "", "", event.getTimestamp(),
-                event.getAngularVelocityX(), event.getAngularVelocityY(), event.getAngularVelocityZ()));
-        String sample = TextUtils.join(",", data);
-        Log.d(TAG, sample);
+        float[] filterValues = convertToFloatArray(bufferingFilter.getFilteredValues(event.getAccelerationX(), event.getAccelerationY(), event.getAccelerationZ()));
+        AccelerometerReading reading  = new AccelerometerReading(mUserID,"Mobile","",event.getTimestamp(),label,filterValues);
+        mClient.sendSensorReading(reading);
+//        broadcastAccelerometerReading(event.getTimestamp(),
+//                event.getAccelerationX(), event.getAccelerationY(), event.getAccelerationZ());
     }
 
+    private float[] convertToFloatArray(double[] doubleArray) {
+        float[] floatArray = new float[doubleArray.length];
+        for (int i = 0 ; i < doubleArray.length; i++)
+        {
+            floatArray[i] = (float) doubleArray[i];
+        }
+        return  floatArray;
+    }
 
     /**
      * Broadcasts the accelerometer reading to other application components, e.g.
@@ -239,5 +314,9 @@ public class BandService extends SensorService implements BandGyroscopeEventList
         intent.setAction(Constants.ACTION.BROADCAST_ACCELEROMETER_DATA);
         LocalBroadcastManager manager = LocalBroadcastManager.getInstance(this);
         manager.sendBroadcast(intent);
+    }
+
+    public static void changeLabel(int newlabel) {
+        label = newlabel;
     }
 }
