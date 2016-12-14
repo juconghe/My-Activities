@@ -29,12 +29,12 @@
 
     <Switch
         android:id="@+id/switchAccelerometer"
-        android:text="@string/text_switch_accelerometer"
         android:gravity="center"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="24sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:text="My Activities +" />
 
     <TextView
         android:id="@+id/txtAccelerometerReading"
@@ -108,6 +108,7 @@
             </LinearLayout>
 
         </LinearLayout>
+
         <TextView
             android:id="@+id/txtActivity"
             android:drawableStart="@drawable/ic_running_black_48dp"
@@ -117,25 +118,51 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:gravity="center" />
+            android:gravity="center"
+            android:drawableLeft="@drawable/ic_running_black_48dp" />
     </LinearLayout>
 
 
     <LinearLayout
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
-        android:layout_below="@+id/layoutAccelerometer">
+        android:layout_below="@+id/layoutAccelerometer"
+        android:orientation="vertical">
 
-        <com.androidplot.xy.XYPlot
-            style="@style/APDefacto.Light"
-            android:id="@+id/accelerometerPlot"
-            android:layout_width="fill_parent"
-            android:layout_height="398dp"
-            ap:title="Accelerometer Signal"
-            ap:rangeTitle="m/s^2"
-            ap:lineLabels="left|bottom"
-            ap:lineLabelRotationBottom="-45"/>
+        <TextView
+            android:text="Sitting Time: "
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/txtSitting"
+            android:textAppearance="@style/TextAppearance.AppCompat.Large" />
 
+        <TextView
+            android:text="Walking Time:"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/txtWalking"
+            android:textAppearance="@style/TextAppearance.AppCompat.Large" />
+
+        <TextView
+            android:text="Running Time:"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/txtRunning"
+            android:textAppearance="@style/TextAppearance.AppCompat.Large" />
+
+        <TextView
+            android:text="Driving Time:"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/txtDriving"
+            android:textAppearance="@style/TextAppearance.AppCompat.Large" />
+
+        <TextView
+            android:text="Health Score: 80"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/txtScore"
+            android:textAppearance="@style/TextAppearance.AppCompat.Large" />
     </LinearLayout>
 
     <LinearLayout
@@ -169,7 +196,7 @@
             android:layout_weight="1" />
 
         <Button
-            android:text="jogging"
+            android:text="Driving"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/button_jogging"

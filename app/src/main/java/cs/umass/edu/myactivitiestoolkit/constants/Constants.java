@@ -28,6 +28,11 @@ public class Constants {
         String STOP_SERVICE = "edu.umass.cs.my-activities-toolkit.action.stop-service";
         String NAVIGATE_TO_APP = "edu.umass.cs.my-activities-toolkit.action.navigate-to-app";
         String BROADCAST_SPEAKER = "edu.umass.cs.my-activities-toolkit.action.broadcast-speaker";
+        String BROADCAST_SITTING = "edu.umass.cs.my-activities-toolkit.action.broadcast_sitting";
+        String BROADCAST_WALKING = "edu.umass.cs.my-activities-toolkit.action.broadcast_walking";
+        String BROADCAST_RUNNING = "edu.umass.cs.my-activities-toolkit.action.broadcast_running";
+        String BROADCAST_DRIVING = "edu.umass.cs.my-activities-toolkit.action.broadcast_driving";
+
     }
 
     /**
@@ -57,6 +62,11 @@ public class Constants {
         String ACCELEROMETER_PEAK_VALUE = "edu.umass.cs.my-activities-toolkit.key.accelerometer-peak-value";
         String NOTIFICATION_ID = "edu.umass.cs.my-activities-toolkit.key.sensor-service-type";
         String SPEAKER = "edu.umass.cs.my-activities-toolkit.key.speaker";
+        String SITTING = "edu.umass.cs.my-activities-toolkit.key.sitting";
+        String WALKING = "edu.umass.cs.my-activities-toolkit.key.walking";
+        String RUNNING = "edu.umass.cs.my-activities-toolkit.key.running";
+        String DRIVING = "edu.umass.cs.my-activities-toolkit.key.driving";
+
     }
 
     /**

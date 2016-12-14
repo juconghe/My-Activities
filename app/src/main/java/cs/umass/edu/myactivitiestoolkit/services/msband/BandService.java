@@ -33,12 +33,16 @@ import com.microsoft.band.sensors.BandHeartRateEventListener;
 import com.microsoft.band.sensors.HeartRateConsentListener;
 import com.microsoft.band.sensors.SampleRate;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import cs.umass.edu.myactivitiestoolkit.R;
 import cs.umass.edu.myactivitiestoolkit.constants.Constants;
 import cs.umass.edu.myactivitiestoolkit.ppg.PPGSensorReading;
 import cs.umass.edu.myactivitiestoolkit.processing.Filter;
 import cs.umass.edu.myactivitiestoolkit.services.SensorService;
 import cs.umass.edu.myactivitiestoolkit.view.activities.MainActivity;
+import edu.umass.cs.MHLClient.client.MessageReceiver;
 import edu.umass.cs.MHLClient.sensors.AccelerometerReading;
 import edu.umass.cs.MHLClient.sensors.GPSReading;
 import edu.umass.cs.MHLClient.sensors.GyroscopeReading;
@@ -75,7 +79,7 @@ public class BandService extends SensorService implements BandGyroscopeEventList
     /**
      * The minimum duration in milliseconds between sensor readings.
      */
-    private static final int MIN_TIME = 5000;
+    private static final int MIN_TIME = 3000;
 
     /**
      * Defines the minimum distance in meters between sequential sensor readings.
@@ -88,6 +92,30 @@ public class BandService extends SensorService implements BandGyroscopeEventList
     private LocationManager locationManager;
     @Override
     protected void onServiceStarted() {
+        mClient.registerMessageReceiver(new MessageReceiver(Constants.MHLClientFilter.ACTIVITY_DETECTED) {
+            @Override
+            protected void onMessageReceived(JSONObject json) {
+                String activity;
+                try {
+                    JSONObject data = json.getJSONObject("data");
+                    activity = data.getString("activity");
+                    Log.w("=======>", "onMessageReceived:" + activity);
+                    if(activity.equals("Sitting")) {
+                        broadcastSittingTime(5);
+                    } else if(activity.equals("Running")){
+                        broadcastRunningTime(5);
+                    } else if(activity.equals("Walking")) {
+                        broadcastWalkingTime(5);
+                    } else {
+                        broadcastDrivingTime(5);
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    return;
+                }
+                // TODO : broadcast activity to UI
+            }
+        });
         broadcastMessage(Constants.MESSAGE.BAND_SERVICE_STARTED);
     }
 
@@ -105,6 +133,7 @@ public class BandService extends SensorService implements BandGyroscopeEventList
      */
     @Override
     public void onLocationChanged(Location location) {
+        Log.w("======>", "onLocationChanged: sending location data");
         mClient.sendSensorReading(new GPSReading(mUserID, "MOBILE", "", location.getTime(), location.getLatitude(), location.getLongitude()));
     }
 
@@ -277,7 +306,7 @@ public class BandService extends SensorService implements BandGyroscopeEventList
 
     @Override
     public void onBandHeartRateChanged(BandHeartRateEvent bandHeartRateEvent) {
-//        broadcastStatus(bandHeartRateEvent.getHeartRate()+"");
+        broadcastStatus(bandHeartRateEvent.getHeartRate()+"");
         HeartBeatReading heartBeatReading = new HeartBeatReading(mUserID, "", "", bandHeartRateEvent.getTimestamp(), bandHeartRateEvent.getHeartRate());
         mClient.sendSensorReading(heartBeatReading);
 }
@@ -312,6 +341,35 @@ public class BandService extends SensorService implements BandGyroscopeEventList
         intent.putExtra(Constants.KEY.TIMESTAMP, timestamp);
         intent.putExtra(Constants.KEY.ACCELEROMETER_DATA, accelerometerReadings);
         intent.setAction(Constants.ACTION.BROADCAST_ACCELEROMETER_DATA);
+        LocalBroadcastManager manager = LocalBroadcastManager.getInstance(this);
+        manager.sendBroadcast(intent);
+    }
+
+    private void broadcastSittingTime(int time) {
+        Intent intent = new Intent();
+        intent.setAction(Constants.ACTION.BROADCAST_SITTING);
+        intent.putExtra(Constants.KEY.SITTING,time);
+        LocalBroadcastManager manager = LocalBroadcastManager.getInstance(this);
+        manager.sendBroadcast(intent);
+    }
+    private void broadcastRunningTime(int time) {
+        Intent intent = new Intent();
+        intent.setAction(Constants.ACTION.BROADCAST_RUNNING);
+        intent.putExtra(Constants.KEY.RUNNING,time);
+        LocalBroadcastManager manager = LocalBroadcastManager.getInstance(this);
+        manager.sendBroadcast(intent);
+    }
+    private void broadcastDrivingTime(int time) {
+        Intent intent = new Intent();
+        intent.setAction(Constants.ACTION.BROADCAST_DRIVING);
+        intent.putExtra(Constants.KEY.DRIVING,time);
+        LocalBroadcastManager manager = LocalBroadcastManager.getInstance(this);
+        manager.sendBroadcast(intent);
+    }
+    private void broadcastWalkingTime(int time) {
+        Intent intent = new Intent();
+        intent.setAction(Constants.ACTION.BROADCAST_WALKING);
+        intent.putExtra(Constants.KEY.WALKING,time);
         LocalBroadcastManager manager = LocalBroadcastManager.getInstance(this);
         manager.sendBroadcast(intent);
     }

@@ -126,7 +126,8 @@ public class ExerciseFragment extends Fragment {
     private Button btn_running;
     private Button btn_sitting;
     private Button btn_jogging;
-
+    private TextView txtSitting,txtWalking,txtRunning,txtDriving;
+    private int sittingTime = 0,runningTime = 0,drivingTime = 0,walkingTime = 0;
     /** The number of data points to display in the graph. **/
     private static final int GRAPH_CAPACITY = 100;
 
@@ -191,28 +192,28 @@ public class ExerciseFragment extends Fragment {
                         switchAccelerometer.setChecked(false);
                     }
                 } else if (intent.getAction().equals(Constants.ACTION.BROADCAST_ACCELEROMETER_DATA)) {
-                    long timestamp = intent.getLongExtra(Constants.KEY.TIMESTAMP, -1);
-                    float[] accelerometerValues = intent.getFloatArrayExtra(Constants.KEY.ACCELEROMETER_DATA);
-                    displayAccelerometerReading(accelerometerValues[0], accelerometerValues[1], accelerometerValues[2]);
+//                    long timestamp = intent.getLongExtra(Constants.KEY.TIMESTAMP, -1);
+//                    float[] accelerometerValues = intent.getFloatArrayExtra(Constants.KEY.ACCELEROMETER_DATA);
+//                    displayAccelerometerReading(accelerometerValues[0], accelerometerValues[1], accelerometerValues[2]);
+//
+//                    mTimestamps.add(timestamp);
+//                    mXValues.add(accelerometerValues[0]);
+//                    mYValues.add(accelerometerValues[1]);
+//                    mZValues.add(accelerometerValues[2]);
+//                    if (mNumberOfPoints >= GRAPH_CAPACITY) {
+//                        mTimestamps.poll();
+//                        mXValues.poll();
+//                        mYValues.poll();
+//                        mZValues.poll();
+//                        while (mPeakTimestamps.size() > 0 && (mPeakTimestamps.peek().longValue() < mTimestamps.peek().longValue())){
+//                            mPeakTimestamps.poll();
+//                            mPeakValues.poll();
+//                        }
+//                    }
+//                    else
+//                        mNumberOfPoints++;
 
-                    mTimestamps.add(timestamp);
-                    mXValues.add(accelerometerValues[0]);
-                    mYValues.add(accelerometerValues[1]);
-                    mZValues.add(accelerometerValues[2]);
-                    if (mNumberOfPoints >= GRAPH_CAPACITY) {
-                        mTimestamps.poll();
-                        mXValues.poll();
-                        mYValues.poll();
-                        mZValues.poll();
-                        while (mPeakTimestamps.size() > 0 && (mPeakTimestamps.peek().longValue() < mTimestamps.peek().longValue())){
-                            mPeakTimestamps.poll();
-                            mPeakValues.poll();
-                        }
-                    }
-                    else
-                        mNumberOfPoints++;
-
-                    updatePlot();
+//                    updatePlot();
                 } else if (intent.getAction().equals(Constants.ACTION.BROADCAST_ANDROID_STEP_COUNT)) {
                     int stepCount = intent.getIntExtra(Constants.KEY.STEP_COUNT, 0);
                     displayAndroidStepCount(stepCount);
@@ -230,10 +231,24 @@ public class ExerciseFragment extends Fragment {
                     int stepCount = intent.getIntExtra(Constants.KEY.STEP_COUNT,0);
                     displayServerStepCount(stepCount);
                 }else if(intent.getAction().equals(Constants.ACTION.BROADCAST_ACTIVITY)) {
-                    Log.w("======>", "onReceive: here");
                     String activity = intent.getStringExtra(Constants.KEY.ACTIVITY);
-                    Log.d("=========>", "onReceive: "+activity);
                     updateLabel(activity);
+                } else if(intent.getAction().equals(Constants.ACTION.BROADCAST_SITTING)) {
+                    int time = intent.getIntExtra(Constants.KEY.SITTING,0);
+                    sittingTime+=time;
+                    txtSitting.setText("Sitting Time: "+sittingTime/60+" minutes");
+                } else if(intent.getAction().equals(Constants.ACTION.BROADCAST_RUNNING)) {
+                    int time = intent.getIntExtra(Constants.KEY.RUNNING,0);
+                    runningTime+=time;
+                    txtRunning.setText("Running Time: "+runningTime/60+" minutes");
+                }else if(intent.getAction().equals(Constants.ACTION.BROADCAST_WALKING)) {
+                    int time = intent.getIntExtra(Constants.KEY.WALKING,0);
+                    walkingTime+=time;
+                    txtWalking.setText("Walking Time: "+walkingTime/60+" minutes");
+                }else if(intent.getAction().equals(Constants.ACTION.BROADCAST_DRIVING)) {
+                    int time = intent.getIntExtra(Constants.KEY.DRIVING,0);
+                    drivingTime+=time;
+                    txtDriving.setText("Driving Time: "+drivingTime/60+ "minutes");
                 }
             }
         }
@@ -254,7 +269,10 @@ public class ExerciseFragment extends Fragment {
         btn_running = (Button)view.findViewById(R.id.button_running);
         btn_jogging = (Button)view.findViewById(R.id.button_jogging);
         btn_sitting = (Button)view.findViewById(R.id.button_sitting);
-
+        txtWalking = (TextView)view.findViewById(R.id.txtWalking);
+        txtRunning = (TextView)view.findViewById(R.id.txtRunning);
+        txtSitting = (TextView)view.findViewById(R.id.txtSitting);
+        txtDriving = (TextView)view.findViewById(R.id.txtDriving);
         btn_sitting.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
                 BandService.changeLabel(2);
@@ -294,7 +312,7 @@ public class ExerciseFragment extends Fragment {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean enabled) {
                 if (enabled){
-                    clearPlotData();
+//                    clearPlotData();
 
                     SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
                     boolean runOverMSBand = preferences.getBoolean(getString(R.string.pref_msband_key),
@@ -312,35 +330,35 @@ public class ExerciseFragment extends Fragment {
         });
 
         // initialize plot and set plot parameters
-        mPlot = (XYPlot) view.findViewById(R.id.accelerometerPlot);
-        mPlot.setRangeBoundaries(-30, 30, BoundaryMode.FIXED);
-        mPlot.setRangeStep(StepMode.SUBDIVIDE, 5);
-        mPlot.getGraph().getDomainOriginLinePaint().setColor(Color.TRANSPARENT);
-        mPlot.getGraph().getDomainGridLinePaint().setColor(Color.TRANSPARENT);
-        mPlot.getGraph().getRangeGridLinePaint().setColor(Color.TRANSPARENT);
-        mPlot.setDomainStep(StepMode.SUBDIVIDE, 1);
+//        mPlot = (XYPlot) view.findViewById(R.id.accelerometerPlot);
+//        mPlot.setRangeBoundaries(-30, 30, BoundaryMode.FIXED);
+//        mPlot.setRangeStep(StepMode.SUBDIVIDE, 5);
+//        mPlot.getGraph().getDomainOriginLinePaint().setColor(Color.TRANSPARENT);
+//        mPlot.getGraph().getDomainGridLinePaint().setColor(Color.TRANSPARENT);
+//        mPlot.getGraph().getRangeGridLinePaint().setColor(Color.TRANSPARENT);
+//        mPlot.setDomainStep(StepMode.SUBDIVIDE, 1);
+//
+//        // To remove the x labels, just set each label to an empty string:
+//        mPlot.getGraph().getLineLabelStyle(XYGraphWidget.Edge.BOTTOM).setFormat(new Format() {
+//            @Override
+//            public StringBuffer format(Object obj, @NonNull StringBuffer toAppendTo, @NonNull FieldPosition pos) {
+//                return toAppendTo.append("");
+//            }
+//            @Override
+//            public Object parseObject(String source, @NonNull ParsePosition pos) {
+//                return null;
+//            }
+//        });
+//        mPlot.setPlotPaddingBottom(-150); //TODO: This isn't device-dependent, and may need to be changed.
+//        mPlot.getLegend().setPaddingBottom(280);
 
-        // To remove the x labels, just set each label to an empty string:
-        mPlot.getGraph().getLineLabelStyle(XYGraphWidget.Edge.BOTTOM).setFormat(new Format() {
-            @Override
-            public StringBuffer format(Object obj, @NonNull StringBuffer toAppendTo, @NonNull FieldPosition pos) {
-                return toAppendTo.append("");
-            }
-            @Override
-            public Object parseObject(String source, @NonNull ParsePosition pos) {
-                return null;
-            }
-        });
-        mPlot.setPlotPaddingBottom(-150); //TODO: This isn't device-dependent, and may need to be changed.
-        mPlot.getLegend().setPaddingBottom(280);
-
-        // set formatting parameters for each signal (accelerometer and accelerometer peaks)
-        mXSeriesFormatter = new LineAndPointFormatter(Color.RED, null, null, null);
-        mYSeriesFormatter = new LineAndPointFormatter(Color.GREEN, null, null, null);
-        mZSeriesFormatter = new LineAndPointFormatter(Color.BLUE, null, null, null);
-
-        mPeakSeriesFormatter = new LineAndPointFormatter(null, Color.BLUE, null, null);
-        mPeakSeriesFormatter.getVertexPaint().setStrokeWidth(PixelUtils.dpToPix(10)); //enlarge the peak points
+//        // set formatting parameters for each signal (accelerometer and accelerometer peaks)
+//        mXSeriesFormatter = new LineAndPointFormatter(Color.RED, null, null, null);
+//        mYSeriesFormatter = new LineAndPointFormatter(Color.GREEN, null, null, null);
+//        mZSeriesFormatter = new LineAndPointFormatter(Color.BLUE, null, null, null);
+//
+//        mPeakSeriesFormatter = new LineAndPointFormatter(null, Color.BLUE, null, null);
+//        mPeakSeriesFormatter.getVertexPaint().setStrokeWidth(PixelUtils.dpToPix(10)); //enlarge the peak points
 
         return view;
     }
@@ -383,6 +401,10 @@ public class ExerciseFragment extends Fragment {
         filter.addAction(Constants.ACTION.BROADCAST_LOCAL_STEP_COUNT);
         filter.addAction(Constants.ACTION.BROADCAST_SERVER_STEP_COUNT);
         filter.addAction(Constants.ACTION.BROADCAST_ACTIVITY);
+        filter.addAction(Constants.ACTION.BROADCAST_WALKING);
+        filter.addAction(Constants.ACTION.BROADCAST_DRIVING);
+        filter.addAction(Constants.ACTION.BROADCAST_RUNNING);
+        filter.addAction(Constants.ACTION.BROADCAST_SITTING);
         broadcastManager.registerReceiver(receiver, filter);
     }
 
@@ -454,34 +476,34 @@ public class ExerciseFragment extends Fragment {
     /**
      * Clears the x, y, z and peak plot data series.
      */
-    private void clearPlotData(){
-        mPeakTimestamps.clear();
-        mPeakValues.clear();
-        mTimestamps.clear();
-        mXValues.clear();
-        mYValues.clear();
-        mZValues.clear();
-        mNumberOfPoints = 0;
-    }
+//    private void clearPlotData(){
+//        mPeakTimestamps.clear();
+//        mPeakValues.clear();
+//        mTimestamps.clear();
+//        mXValues.clear();
+//        mYValues.clear();
+//        mZValues.clear();
+//        mNumberOfPoints = 0;
+//    }
 
     /**
      * Updates and redraws the accelerometer plot, along with the peaks detected.
      */
-    private void updatePlot(){
-        XYSeries xSeries = new SimpleXYSeries(new ArrayList<>(mTimestamps), new ArrayList<>(mXValues), "X");
-        XYSeries ySeries = new SimpleXYSeries(new ArrayList<>(mTimestamps), new ArrayList<>(mYValues), "Y");
-        XYSeries zSeries = new SimpleXYSeries(new ArrayList<>(mTimestamps), new ArrayList<>(mZValues), "Z");
-
-        XYSeries peaks = new SimpleXYSeries(new ArrayList<>(mPeakTimestamps), new ArrayList<>(mPeakValues), "PEAKS");
-
-        //redraw the plot:
-        mPlot.clear();
-        mPlot.addSeries(xSeries, mXSeriesFormatter);
-        mPlot.addSeries(ySeries, mYSeriesFormatter);
-        mPlot.addSeries(zSeries, mZSeriesFormatter);
-        mPlot.addSeries(peaks, mPeakSeriesFormatter);
-        mPlot.redraw();
-    }
+//    private void updatePlot(){
+//        XYSeries xSeries = new SimpleXYSeries(new ArrayList<>(mTimestamps), new ArrayList<>(mXValues), "X");
+//        XYSeries ySeries = new SimpleXYSeries(new ArrayList<>(mTimestamps), new ArrayList<>(mYValues), "Y");
+//        XYSeries zSeries = new SimpleXYSeries(new ArrayList<>(mTimestamps), new ArrayList<>(mZValues), "Z");
+//
+//        XYSeries peaks = new SimpleXYSeries(new ArrayList<>(mPeakTimestamps), new ArrayList<>(mPeakValues), "PEAKS");
+//
+//        //redraw the plot:
+//        mPlot.clear();
+//        mPlot.addSeries(xSeries, mXSeriesFormatter);
+//        mPlot.addSeries(ySeries, mYSeriesFormatter);
+//        mPlot.addSeries(zSeries, mZSeriesFormatter);
+//        mPlot.addSeries(peaks, mPeakSeriesFormatter);
+//        mPlot.redraw();
+//    }
 
     /**
      * Request permissions required for video recording. These include
