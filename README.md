@@ -7,3 +7,9 @@ This is the starter code for CS390MB Mobile Health Sensing. My Activities is a d
 ## Getting Started
 
 You should have arrived here as part of Assignment A0. Clone or fork the repository and follow the instructions in the assignment details to get accelerometer data streaming to the server.
+
+Final Project Modifications:
+Modified files:
+services/msband/BandServices
+services/msband/HeartBeatReading
+view/activities/MainActivity
