@@ -126,8 +126,8 @@ public class ExerciseFragment extends Fragment {
     private Button btn_running;
     private Button btn_sitting;
     private Button btn_jogging;
-    private TextView txtSitting,txtWalking,txtRunning,txtDriving;
-    private int sittingTime = 0,runningTime = 0,drivingTime = 0,walkingTime = 0;
+    private TextView txtSitting,txtWalking,txtRunning,txtDriving,txtHeathScore; 
+    private int sittingTime = 0,runningTime = 0,drivingTime = 0,walkingTime = 0,HeathScore =50;
     /** The number of data points to display in the graph. **/
     private static final int GRAPH_CAPACITY = 100;
 
@@ -241,10 +241,14 @@ public class ExerciseFragment extends Fragment {
                     int time = intent.getIntExtra(Constants.KEY.RUNNING,0);
                     runningTime+=time;
                     txtRunning.setText("Running Time: "+runningTime/60+" minutes");
+                    HeathScore+=2; 
+                    txtHeathScore.setText("Health Score: "+HeathScore);
                 }else if(intent.getAction().equals(Constants.ACTION.BROADCAST_WALKING)) {
                     int time = intent.getIntExtra(Constants.KEY.WALKING,0);
                     walkingTime+=time;
                     txtWalking.setText("Walking Time: "+walkingTime/60+" minutes");
+                    HeathScore+=1; 
+                    txtHeathScore.setText("Health Score: "+HeathScore);
                 }else if(intent.getAction().equals(Constants.ACTION.BROADCAST_DRIVING)) {
                     int time = intent.getIntExtra(Constants.KEY.DRIVING,0);
                     drivingTime+=time;
@@ -273,6 +277,7 @@ public class ExerciseFragment extends Fragment {
         txtRunning = (TextView)view.findViewById(R.id.txtRunning);
         txtSitting = (TextView)view.findViewById(R.id.txtSitting);
         txtDriving = (TextView)view.findViewById(R.id.txtDriving);
+        txtHeathScore = (TextView)view.findViewById(R.id.txtScore); 
         btn_sitting.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
                 BandService.changeLabel(2);
